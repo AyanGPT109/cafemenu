@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sip &amp; Sprout Cafe Menu</title>
+  <meta
+    name="description"
+    content="A bold one-page cafe menu featuring mojitos, cold coffee, hot coffee, and fresh veg and non-veg salads."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <header class="hero">
+    <div class="cart-toggle" id="cartToggle">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="cart-count" id="cartCount">0</span>
+    </div>
+    <div class="hero__copy">
+      <p class="eyebrow">Cafe Menu / Static One-Page Design</p>
+      <h1>Sip &amp; Sprout</h1>
+      <p class="hero__lede">
+        Botanical mojitos, velvet coffee, and bright salads curated for a cafe menu
+        that feels premium without being hard to deploy.
+      </p>
+
+      <div class="hero__chips" aria-label="Menu categories">
+        <span>Mojitos</span>
+        <span>Cold Coffee</span>
+        <span>Hot Coffee</span>
+        <span>Veg Salads</span>
+        <span>Non-Veg Salads</span>
+      </div>
+
+      <div class="hero__notes">
+        <article>
+          <p class="note__label">House Mood</p>
+          <p class="note__value">Fresh, warm, and camera-ready</p>
+        </article>
+        <article>
+          <p class="note__label">Best For</p>
+          <p class="note__value">Table tents, wall screens, QR menus</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="hero__gallery" aria-label="Signature menu photography">
+      <figure class="frame frame--tall">
+        <img
+          src="https://images.pexels.com/photos/7259052/pexels-photo-7259052.jpeg?cs=srgb&dl=pexels-aram-diseno-3853019-7259052.jpg&fm=jpg"
+          alt="Fresh mojito with lime, mint, and ice"
+        >
+        <figcaption>Mint-lime mojito</figcaption>
+      </figure>
+      <figure class="frame frame--wide">
+        <img
+          src="https://images.pexels.com/photos/29070514/pexels-photo-29070514.jpeg?cs=srgb&dl=pexels-elifgokce787-29070514.jpg&fm=jpg"
+          alt="Layered iced coffee on a cafe table"
+        >
+        <figcaption>Layered cold coffee</figcaption>
+      </figure>
+      <figure class="frame frame--wide frame--warm">
+        <img
+          src="https://images.pexels.com/photos/20793177/pexels-photo-20793177.jpeg?cs=srgb&dl=pexels-hilalbulbul-20793177.jpg&fm=jpg"
+          alt="Hot coffee in warm sunlight near a window"
+        >
+        <figcaption>Sunlit hot brew</figcaption>
+      </figure>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="spotlight">
+      <div class="spotlight__intro">
+        <p class="eyebrow">Signature Selection</p>
+        <h2>Built like an editorial menu board</h2>
+        <p>
+          The layout keeps your drinks and salads easy to scan while still feeling
+          distinct from the usual cafe flyer templates.
+        </p>
+      </div>
+
+      <div class="spotlight__grid">
+        <article class="spotlight-card">
+          <img
+            src="https://images.pexels.com/photos/4198023/pexels-photo-4198023.jpeg?cs=srgb&dl=pexels-karola-g-4198023.jpg&fm=jpg"
+            alt="Vegetable salad bowl with colorful fresh toppings"
+            loading="lazy"
+          >
+          <div>
+            <p class="spotlight-card__tag">Veg Bowl</p>
+            <h3>Garden glow textures</h3>
+          </div>
+        </article>
+        <article class="spotlight-card">
+          <img
+            src="https://images.pexels.com/photos/19904309/pexels-photo-19904309.jpeg?cs=srgb&dl=pexels-holoshuriken-19904309.jpg&fm=jpg"
+            alt="Chicken salad with greens, tomato, and cucumber"
+            loading="lazy"
+          >
+          <div>
+            <p class="spotlight-card__tag">Non-Veg Bowl</p>
+            <h3>Crisp chicken crunch</h3>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="menu-section">
+      <div class="section-heading">
+        <p class="eyebrow">01 / Drinks</p>
+        <h2>Mojitos and coffee pours</h2>
+      </div>
+
+      <div class="menu-grid">
+        <article class="menu-card">
+          <div class="menu-card__header">
+            <p class="menu-card__index">Mojitos</p>
+            <p class="menu-card__blurb">Sparkling, mint-forward, and photogenic.</p>
+          </div>
+          <div class="menu-list">
+            <div class="menu-item">
+              <div>
+                <h3>Citrus Mint Mojito</h3>
+                <p>Fresh lime, mint shards, sparkling citrus, crushed ice.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;189</span>
+                <button class="add-to-cart-btn" data-name="Citrus Mint Mojito" data-price="189">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Berry Basil Mojito</h3>
+                <p>Muddled berries, basil syrup, lemon fizz, mint crown.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;219</span>
+                <button class="add-to-cart-btn" data-name="Berry Basil Mojito" data-price="219">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Green Apple Mojito</h3>
+                <p>Tart apple, mint tonic, soda lift, chilled glass.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;209</span>
+                <button class="add-to-cart-btn" data-name="Green Apple Mojito" data-price="209">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="menu-card">
+          <div class="menu-card__header">
+            <p class="menu-card__index">Cold Coffee</p>
+            <p class="menu-card__blurb">Creamy cafe staples with dessert energy.</p>
+          </div>
+          <div class="menu-list">
+            <div class="menu-item">
+              <div>
+                <h3>Cloud Cold Coffee</h3>
+                <p>Cold brew, vanilla cream, cocoa dust, silky finish.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;209</span>
+                <button class="add-to-cart-btn" data-name="Cloud Cold Coffee" data-price="209">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Hazelnut Ice Latte</h3>
+                <p>Double shot espresso, hazelnut milk, slow-melt ice.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;229</span>
+                <button class="add-to-cart-btn" data-name="Hazelnut Ice Latte" data-price="229">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Salted Caramel Frappe</h3>
+                <p>Blended coffee, caramel ribbon, chocolate shards.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;239</span>
+                <button class="add-to-cart-btn" data-name="Salted Caramel Frappe" data-price="239">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="menu-card menu-card--accent">
+          <div class="menu-card__header">
+            <p class="menu-card__index">Hot Coffee</p>
+            <p class="menu-card__blurb">Warm, balanced, and built for repeat orders.</p>
+          </div>
+          <div class="menu-list">
+            <div class="menu-item">
+              <div>
+                <h3>House Espresso</h3>
+                <p>Deep roast shot with dark cocoa aroma.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;119</span>
+                <button class="add-to-cart-btn" data-name="House Espresso" data-price="119">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Cinnamon Flat White</h3>
+                <p>Velvet milk, balanced espresso, light cinnamon mist.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;189</span>
+                <button class="add-to-cart-btn" data-name="Cinnamon Flat White" data-price="189">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Mocha Roast Latte</h3>
+                <p>Dark cocoa, espresso body, rich steamed milk.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;209</span>
+                <button class="add-to-cart-btn" data-name="Mocha Roast Latte" data-price="209">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="menu-section">
+      <div class="section-heading">
+        <p class="eyebrow">02 / Salads</p>
+        <h2>Veg and non-veg bowls</h2>
+      </div>
+
+      <div class="menu-grid menu-grid--salads">
+        <article class="menu-card menu-card--veg">
+          <div class="menu-card__header">
+            <p class="menu-card__index">Veg Salads</p>
+            <p class="menu-card__blurb">Bright crunch, herb lift, and clean plating.</p>
+          </div>
+          <div class="menu-list">
+            <div class="menu-item">
+              <div>
+                <h3>Garden Glow Bowl</h3>
+                <p>Lettuce, avocado, corn, feta, citrus vinaigrette.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;279</span>
+                <button class="add-to-cart-btn" data-name="Garden Glow Bowl" data-price="279">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Roasted Paneer Crunch</h3>
+                <p>Pepper paneer, quinoa, cucumber ribbons, seed mix.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;299</span>
+                <button class="add-to-cart-btn" data-name="Roasted Paneer Crunch" data-price="299">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Mediterranean Harvest</h3>
+                <p>Chickpeas, olives, cherry tomato, herbs, lemon oil.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;289</span>
+                <button class="add-to-cart-btn" data-name="Mediterranean Harvest" data-price="289">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="menu-card menu-card--nonveg">
+          <div class="menu-card__header">
+            <p class="menu-card__index">Non-Veg Salads</p>
+            <p class="menu-card__blurb">Protein-led cafe bowls with sharper seasoning.</p>
+          </div>
+          <div class="menu-list">
+            <div class="menu-item">
+              <div>
+                <h3>Smoked Chicken Caesar</h3>
+                <p>Romaine, parmesan, garlic crumbs, creamy Caesar.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;339</span>
+                <button class="add-to-cart-btn" data-name="Smoked Chicken Caesar" data-price="339">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Lemon Pepper Chicken Bowl</h3>
+                <p>Grilled chicken, greens, pickled onion, herb drizzle.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;349</span>
+                <button class="add-to-cart-btn" data-name="Lemon Pepper Chicken Bowl" data-price="349">Add to Cart</button>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div>
+                <h3>Peri Peri Crunch Salad</h3>
+                <p>Spiced chicken bites, cucumber, tomato, cooling yogurt.</p>
+              </div>
+              <div class="menu-item__footer">
+                <span>&#8377;359</span>
+                <button class="add-to-cart-btn" data-name="Peri Peri Crunch Salad" data-price="359">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+
+
+  <!-- Cart Sidebar -->
+  <div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h3>Your Order</h3>
+      <button class="cart-close" id="cartClose">&times;</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <p class="cart-empty">Your cart is empty</p>
+    </div>
+    <div class="cart-footer">
+      <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout</button>
+      <button class="clear-cart-btn" id="clearCartBtn">Clear Cart</button>
+    </div>
+  </div>
+</body>
+
+<script>
+// Cart functionality
+let cart = JSON.parse(localStorage.getItem('cafeCart')) || [];
+
+// DOM elements
+const cartToggle = document.getElementById('cartToggle');
+const cartSidebar = document.getElementById('cartSidebar');
+const cartClose = document.getElementById('cartClose');
+const cartCount = document.getElementById('cartCount');
+const cartItems = document.getElementById('cartItems');
+const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+const clearCartBtn = document.getElementById('clearCartBtn');
+const checkoutBtn = document.getElementById('checkoutBtn');
+
+// Initialize
+updateCartUI();
+
+// Event listeners
+cartToggle.addEventListener('click', openCart);
+cartClose.addEventListener('click', closeCart);
+clearCartBtn.addEventListener('click', clearCart);
+checkoutBtn.addEventListener('click', checkout);
+
+addToCartBtns.forEach(btn => {
+  btn.addEventListener('click', function() {
+    const name = this.dataset.name;
+    const price = parseInt(this.dataset.price);
+    addToCart(name, price);
+  });
+});
+
+// Close cart when clicking outside
+document.addEventListener('click', function(e) {
+  if (!cartSidebar.contains(e.target) && !cartToggle.contains(e.target)) {
+    closeCart();
+  }
+});
+
+function openCart() {
+  cartSidebar.classList.add('open');
+}
+
+function closeCart() {
+  cartSidebar.classList.remove('open');
+}
+
+function addToCart(name, price) {
+  const existingItem = cart.find(item => item.name === name);
+  
+  if (existingItem) {
+    existingItem.quantity++;
+  } else {
+    cart.push({ name, price, quantity: 1 });
+  }
+  
+  saveCart();
+  updateCartUI();
+  
+  // Show feedback
+  showAddedFeedback(name);
+}
+
+function removeFromCart(name) {
+  cart = cart.filter(item => item.name !== name);
+  saveCart();
+  updateCartUI();
+}
+
+function updateQuantity(name, change) {
+  const item = cart.find(item => item.name === name);
+  if (item) {
+    item.quantity += change;
+    if (item.quantity <= 0) {
+      removeFromCart(name);
+    } else {
+      saveCart();
+      updateCartUI();
+    }
+  }
+}
+
+function clearCart() {
+  cart = [];
+  saveCart();
+  updateCartUI();
+}
+
+function saveCart() {
+  localStorage.setItem('cafeCart', JSON.stringify(cart));
+}
+
+function updateCartUI() {
+  // Update cart count
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  cartCount.textContent = totalItems;
+  
+  // Update cart items
+  if (cart.length === 0) {
+    cartItems.innerHTML = '<p class="cart-empty">Your cart is empty</p>';
+  } else {
+    cartItems.innerHTML = cart.map(item => `
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <h4>${item.name}</h4>
+          <span>&#8377;${item.price}</span>
+        </div>
+        <div class="cart-item-controls">
+          <button class="quantity-btn" onclick="updateQuantity('${item.name}', -1)">-</button>
+          <span class="quantity">${item.quantity}</span>
+          <button class="quantity-btn" onclick="updateQuantity('${item.name}', 1)">+</button>
+          <button class="remove-btn" onclick="removeFromCart('${item.name}')">&times;</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function showAddedFeedback(itemName) {
+  const feedback = document.createElement('div');
+  feedback.className = 'add-feedback';
+  feedback.textContent = `${itemName} added to cart!`;
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => {
+    feedback.remove();
+  }, 2000);
+}
+
+function checkout() {
+  if (cart.length === 0) {
+    return;
+  }
+  
+  // Save order to localStorage for admin portal
+  const order = {
+    id: generateOrderId(),
+    timestamp: new Date().toISOString(),
+    items: [...cart],
+    status: 'pending',
+    total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+    device: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+    userAgent: navigator.userAgent.substring(0, 50)
+  };
+  
+  // Get existing orders or create new array
+  let existingOrders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+  existingOrders.push(order);
+  
+  // Save with timestamp to force refresh
+  localStorage.setItem('cafeOrders', JSON.stringify(existingOrders));
+  localStorage.setItem('lastOrderTime', new Date().toISOString());
+  
+  // Also save in multiple storage locations for better sync
+  sessionStorage.setItem('latestOrder', JSON.stringify(order));
+  sessionStorage.setItem('lastOrderTime', new Date().toISOString());
+  
+  // Try to use a global storage event
+  try {
+    window.parent.postMessage({
+      type: 'newOrder',
+      order: order,
+      timestamp: new Date().toISOString()
+    }, '*');
+  } catch(e) {
+    // Ignore cross-origin errors
+  }
+  
+  // Clear cart and update UI
+  cart = [];
+  saveCart();
+  updateCartUI();
+  closeCart();
+  
+  // Trigger multiple events for better detection
+  window.dispatchEvent(new Event('storage'));
+  window.dispatchEvent(new CustomEvent('newOrder', { detail: order }));
+  
+  // Force a storage write to trigger events
+  const testKey = 'orderSync_' + Date.now();
+  localStorage.setItem(testKey, '1');
+  setTimeout(() => localStorage.removeItem(testKey), 100);
+}
+
+function showNotification(message) {
+  const feedback = document.createElement('div');
+  feedback.className = 'add-feedback';
+  feedback.textContent = message;
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => {
+    feedback.remove();
+  }, 3000);
+}
+
+function generateOrderId() {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).substr(2, 5).toUpperCase();
+  return `ORD-${timestamp}-${random}`;
+}
+</script>
+</html>

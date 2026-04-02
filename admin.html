@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal - Sip & Sprout Cafe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="admin-styles.css">
+</head>
+<body>
+  <div class="ambient ambient--left"></div>
+  <div class="ambient ambient--right"></div>
+
+  <header class="admin-header">
+    <div class="admin-header__content">
+      <h1>Admin Portal</h1>
+      <p class="admin-header__subtitle">Order Management - FCFO (First Come, First Out)</p>
+      <div class="admin-stats">
+        <div class="stat-card">
+          <span class="stat-number" id="totalOrders">0</span>
+          <span class="stat-label">Total Orders</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="pendingOrders">0</span>
+          <span class="stat-label">Pending</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="completedOrders">0</span>
+          <span class="stat-label">Completed</span>
+        </div>
+      </div>
+    </div>
+    <div class="admin-header__actions">
+      <button class="refresh-btn" id="refreshBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M23 4V10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M1 20V14H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3.51 9C4.15879 7.82345 5.06731 6.80846 6.17221 6.03055C7.27711 5.25264 8.54545 4.73028 9.87986 4.50324C11.2143 4.27621 12.5817 4.3504 13.8823 4.7204C15.1829 5.0904 16.3827 5.74664 17.39 6.64001L23 10M1 14L6.6 17.36C7.60734 18.2534 8.80713 18.9096 10.1077 19.2796C11.4083 19.6496 12.7757 19.7238 14.1101 19.4968C15.4446 19.2697 16.7129 18.7474 17.8178 17.9695C18.9227 17.1915 19.8312 16.1766 20.48 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Refresh
+      </button>
+      <button class="clear-all-btn" id="clearAllBtn">Clear All Orders</button>
+    </div>
+  </header>
+
+  <main class="admin-layout">
+    <section class="orders-section">
+      <div class="section-header">
+        <h2>Orders Queue</h2>
+        <div class="bulk-actions">
+          <button class="bulk-delete-btn" id="bulkDeleteBtn" style="display: none;">Delete Selected Items</button>
+        </div>
+        <div class="filter-controls">
+          <select class="filter-select" id="statusFilter">
+            <option value="all">All Orders</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="orders-container" id="ordersContainer">
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 2C9.55228 2 10 2.44772 10 3C10 3.55228 9.55228 4 9 4C8.44772 4 8 3.55228 8 3C8 2.44772 8.44772 2 9 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 2C20.5523 2 21 2.44772 21 3C21 3.55228 20.5523 4 20 4C19.4477 4 19 3.55228 19 3C19 2.44772 19.4477 2 20 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h3>No orders yet</h3>
+          <p>Orders will appear here when customers place them</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Order Management System
+    let orders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+
+    // DOM elements
+    const ordersContainer = document.getElementById('ordersContainer');
+    const totalOrdersEl = document.getElementById('totalOrders');
+    const pendingOrdersEl = document.getElementById('pendingOrders');
+    const completedOrdersEl = document.getElementById('completedOrders');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const statusFilter = document.getElementById('statusFilter');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+    // Initialize
+    console.log('Admin panel initializing...');
+    renderOrders();
+    updateStats();
+    console.log('Admin panel initialized');
+
+    // Event listeners
+    refreshBtn.addEventListener('click', () => {
+      orders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+      
+      // Also check sessionStorage for any missed orders
+      const latestOrder = sessionStorage.getItem('latestOrder');
+      if (latestOrder) {
+        const order = JSON.parse(latestOrder);
+        if (!orders.find(o => o.id === order.id)) {
+          orders.push(order);
+          localStorage.setItem('cafeOrders', JSON.stringify(orders));
+        }
+        sessionStorage.removeItem('latestOrder');
+      }
+      
+      renderOrders();
+      updateStats();
+      
+      // Show debug info
+      console.log('Orders refreshed. Total orders:', orders.length);
+      console.log('Orders:', orders);
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+      localStorage.removeItem('cafeOrders');
+      orders = [];
+      renderOrders();
+      updateStats();
+    });
+
+    statusFilter.addEventListener('change', renderOrders);
+
+    // Bulk delete functionality
+    bulkDeleteBtn.addEventListener('click', bulkDeleteSelected);
+
+    // Checkbox change listener
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('item-checkbox')) {
+        updateBulkDeleteButton();
+      }
+    });
+
+    function renderOrders() {
+      console.log('Rendering orders, total:', orders.length);
+      
+      const filterValue = statusFilter ? statusFilter.value : 'all';
+      const filteredOrders = filterValue === 'all' 
+        ? orders 
+        : orders.filter(order => order.status === filterValue);
+
+      if (filteredOrders.length === 0) {
+        ordersContainer.innerHTML = `
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 2C9.55228 2 10 2.44772 10 3C10 3.55228 9.55228 4 9 4C8.44772 4 8 3.55228 8 3C8 2.44772 8.44772 2 9 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 2C20.5523 2 21 2.44772 21 3C21 3.55228 20.5523 4 20 4C19.4477 4 19 3.55228 19 3C19 2.44772 19.4477 2 20 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3>No ${filterValue === 'all' ? '' : filterValue} orders</h3>
+            <p>${filterValue === 'all' ? 'Orders will appear here when customers place them' : `No ${filterValue} orders found`}</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort orders: pending first, then completed, then cancelled
+      const sortedOrders = filteredOrders.sort((a, b) => {
+        const statusPriority = {
+          'pending': 1,
+          'completed': 2,
+          'cancelled': 3
+        };
+        
+        const aPriority = statusPriority[a.status] || 999;
+        const bPriority = statusPriority[b.status] || 999;
+        
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        return new Date(a.timestamp) - new Date(b.timestamp);
+      });
+
+      console.log('Rendering sorted orders:', sortedOrders.length);
+
+      ordersContainer.innerHTML = sortedOrders.map((order, index) => `
+        <div class="order-card ${order.status}" data-order-id="${order.id}">
+          <div class="order-header">
+            <div class="order-info">
+              <span class="order-id">#${order.id}</span>
+              <span class="order-time">${formatTime(order.timestamp)}</span>
+              <span class="order-status ${order.status}">${order.status}</span>
+            </div>
+            <div class="order-actions">
+              ${order.status === 'pending' ? `
+                <button class="complete-btn" onclick="completeOrder('${order.id}')">Complete</button>
+                <button class="cancel-btn" onclick="cancelOrder('${order.id}')">Cancel</button>
+              ` : ''}
+              <button class="delete-btn" onclick="deleteOrder('${order.id}')">Delete Order</button>
+            </div>
+          </div>
+          <div class="order-items">
+            ${order.items.map((item, itemIndex) => `
+              <div class="order-item" data-order-id="${order.id}" data-item-index="${itemIndex}">
+                <input type="checkbox" class="item-checkbox" data-order-id="${order.id}" data-item-index="${itemIndex}">
+                <span class="item-name">${item.name}</span>
+                <span class="item-quantity">x${item.quantity}</span>
+                <span class="item-price">&#8377;${item.price * item.quantity}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="order-footer">
+            <span class="order-total">Total: &#8377;${calculateOrderTotal(order.items)}</span>
+          </div>
+        </div>
+      `).join('');
+      
+      console.log('Orders rendered successfully');
+    }
+
+    function updateStats() {
+      const total = orders.length;
+      const pending = orders.filter(order => order.status === 'pending').length;
+      const completed = orders.filter(order => order.status === 'completed').length;
+
+      totalOrdersEl.textContent = total;
+      pendingOrdersEl.textContent = pending;
+      completedOrdersEl.textContent = completed;
+    }
+
+    function completeOrder(orderId) {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        order.status = 'completed';
+        order.completedAt = new Date().toISOString();
+        saveOrders();
+        renderOrders();
+        updateStats();
+      }
+    }
+
+    function cancelOrder(orderId) {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        order.status = 'cancelled';
+        order.cancelledAt = new Date().toISOString();
+        saveOrders();
+        renderOrders();
+        updateStats();
+      }
+    }
+
+    function deleteOrder(orderId) {
+      if (confirm(`Are you sure you want to delete order #${orderId}?`)) {
+        orders = orders.filter(o => o.id !== orderId);
+        saveOrders();
+        renderOrders();
+        updateStats();
+      }
+    }
+
+    function bulkDeleteSelected() {
+      const selectedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+      const itemsToDelete = [];
+      
+      selectedCheckboxes.forEach(checkbox => {
+        const orderId = checkbox.dataset.orderId;
+        const itemIndex = parseInt(checkbox.dataset.itemIndex);
+        itemsToDelete.push({ orderId, itemIndex });
+      });
+      
+      if (itemsToDelete.length === 0) {
+        return;
+      }
+      
+      if (confirm(`Are you sure you want to delete ${itemsToDelete.length} selected item(s)?`)) {
+        // Group items by order
+        const itemsByOrder = {};
+        itemsToDelete.forEach(item => {
+          if (!itemsByOrder[item.orderId]) {
+            itemsByOrder[item.orderId] = [];
+          }
+          itemsByOrder[item.orderId].push(item.itemIndex);
+        });
+        
+        // Remove items from each order
+        Object.keys(itemsByOrder).forEach(orderId => {
+          const order = orders.find(o => o.id === orderId);
+          if (order) {
+            // Sort indices in descending order to remove from back to front
+            const indicesToRemove = itemsByOrder[orderId].sort((a, b) => b - a);
+            indicesToRemove.forEach(index => {
+              order.items.splice(index, 1);
+            });
+            
+            // If order has no items left, remove the entire order
+            if (order.items.length === 0) {
+              orders = orders.filter(o => o.id !== orderId);
+            }
+          }
+        });
+        
+        saveOrders();
+        renderOrders();
+        updateStats();
+        updateBulkDeleteButton();
+      }
+    }
+
+    function updateBulkDeleteButton() {
+      const selectedCount = document.querySelectorAll('.item-checkbox:checked').length;
+      if (selectedCount > 0) {
+        bulkDeleteBtn.style.display = 'block';
+        bulkDeleteBtn.textContent = `Delete Selected Items (${selectedCount})`;
+      } else {
+        bulkDeleteBtn.style.display = 'none';
+      }
+    }
+
+    function saveOrders() {
+      localStorage.setItem('cafeOrders', JSON.stringify(orders));
+    }
+
+    function calculateOrderTotal(items) {
+      return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    // Auto-refresh every 10 seconds and listen for storage changes
+    setInterval(() => {
+      orders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+      renderOrders();
+      updateStats();
+    }, 10000);
+
+    // Listen for storage changes (cross-tab communication)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'cafeOrders' || e.key === 'lastOrderTime' || e.key?.startsWith('orderSync_')) {
+        orders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+        renderOrders();
+        updateStats();
+      }
+    });
+
+    // Listen for custom events
+    window.addEventListener('newOrder', function(e) {
+      orders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+      renderOrders();
+      updateStats();
+    });
+
+    // Listen for postMessage events
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'newOrder') {
+        orders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+        renderOrders();
+        updateStats();
+      }
+    });
+
+    // More frequent check for sessionStorage orders
+    setInterval(() => {
+      const latestOrder = sessionStorage.getItem('latestOrder');
+      if (latestOrder) {
+        const order = JSON.parse(latestOrder);
+        const existingOrders = JSON.parse(localStorage.getItem('cafeOrders')) || [];
+        
+        // Check if this order already exists
+        if (!existingOrders.find(o => o.id === order.id)) {
+          existingOrders.push(order);
+          localStorage.setItem('cafeOrders', JSON.stringify(existingOrders));
+          orders = existingOrders;
+          renderOrders();
+          updateStats();
+        }
+        
+        sessionStorage.removeItem('latestOrder');
+      }
+    }, 2000);
+
+    // Make functions globally accessible
+    window.completeOrder = completeOrder;
+    window.cancelOrder = cancelOrder;
+    window.deleteOrder = deleteOrder;
+  </script>
+</body>
+</html>
