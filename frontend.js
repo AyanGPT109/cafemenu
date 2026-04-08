@@ -296,12 +296,14 @@ async function fetchAndRenderMenu() {
         const stock = Number.isFinite(Number(item.stock)) ? Number(item.stock) : 0;
         const showFewLeft = stock > 0 && stock <= 3;
         const outOfStock = stock <= 0;
-        const hint = outOfStock ? "Out of stock" : showFewLeft ? "Only few left" : "Freshly prepared.";
+        const stockHint = outOfStock ? "Out of stock" : showFewLeft ? "Only few left" : "Freshly prepared.";
+        const desc = (item.description || "").trim();
+        const subline = desc ? `${escapeHtml(desc)} · ${escapeHtml(stockHint)}` : escapeHtml(stockHint);
         return `
           <div class="menu-item">
             <div>
               <h3>${escapeHtml(name)}</h3>
-              <p>${hint}</p>
+              <p>${subline}</p>
             </div>
             <div class="menu-item__footer">
               <span>&#8377;${price}</span>

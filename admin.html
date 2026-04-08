@@ -127,6 +127,64 @@
 
     <section class="orders-section" style="margin-top: 24px;">
       <div class="section-header">
+        <h2>Add menu item</h2>
+        <p style="margin: 0; opacity: 0.75;">New items are saved to Supabase and appear on the customer menu for this cafe.</p>
+      </div>
+      <div class="orders-container" id="addMenuItemWrap">
+        <div class="order-card done" style="margin-bottom: 0;">
+          <div class="order-items" style="display: grid; gap: 12px;">
+            <div class="order-item" style="flex-direction: column; align-items: stretch; gap: 6px;">
+              <span class="item-name">Item name</span>
+              <input
+                type="text"
+                id="newItemName"
+                placeholder="e.g. Iced latte"
+                maxlength="120"
+                style="width: 100%; padding: 8px; border-radius: 10px; border: 1px solid rgba(26, 23, 21, 0.15); background: rgba(255, 255, 255, 0.6); color: inherit; font: inherit;"
+              />
+            </div>
+            <div class="order-item" style="flex-direction: column; align-items: stretch; gap: 6px;">
+              <span class="item-name">Price (₹)</span>
+              <input
+                type="number"
+                id="newItemPrice"
+                min="0"
+                step="1"
+                placeholder="0"
+                style="max-width: 160px; padding: 8px; border-radius: 10px; border: 1px solid rgba(26, 23, 21, 0.15); background: rgba(255, 255, 255, 0.6); color: inherit; font: inherit;"
+              />
+            </div>
+            <div class="order-item" style="flex-direction: column; align-items: stretch; gap: 6px;">
+              <span class="item-name">Short description</span>
+              <input
+                type="text"
+                id="newItemDescription"
+                placeholder="Optional — e.g. Oat milk, double shot"
+                maxlength="200"
+                style="width: 100%; padding: 8px; border-radius: 10px; border: 1px solid rgba(26, 23, 21, 0.15); background: rgba(255, 255, 255, 0.6); color: inherit; font: inherit;"
+              />
+            </div>
+            <div class="order-item" style="flex-direction: column; align-items: stretch; gap: 6px;">
+              <span class="item-name">Initial stock</span>
+              <input
+                type="number"
+                id="newItemStock"
+                min="0"
+                step="1"
+                value="10"
+                style="max-width: 160px; padding: 8px; border-radius: 10px; border: 1px solid rgba(26, 23, 21, 0.15); background: rgba(255, 255, 255, 0.6); color: inherit; font: inherit;"
+              />
+            </div>
+          </div>
+          <div style="margin-top: 14px;">
+            <button type="button" class="refresh-btn" id="addMenuItemBtn" style="width: fit-content;">Add to menu</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="orders-section" style="margin-top: 24px;">
+      <div class="section-header">
         <h2>Menu Control</h2>
         <p style="margin: 0; opacity: 0.75;">Update price, stock, and availability in real-time.</p>
       </div>

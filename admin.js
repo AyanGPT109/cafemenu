@@ -21,6 +21,11 @@ const clearAllBtn = document.getElementById("clearAllBtn");
 const statusFilter = document.getElementById("statusFilter");
 const bulkDeleteBtn = document.getElementById("bulkDeleteBtn");
 const menuControlContainer = document.getElementById("menuControlContainer");
+const addMenuItemBtn = document.getElementById("addMenuItemBtn");
+const newItemNameInput = document.getElementById("newItemName");
+const newItemPriceInput = document.getElementById("newItemPrice");
+const newItemDescriptionInput = document.getElementById("newItemDescription");
+const newItemStockInput = document.getElementById("newItemStock");
 
 bulkDeleteBtn.style.display = "none";
 
@@ -46,6 +51,7 @@ async function initializeAdmin() {
     }
     refreshBtn.disabled = true;
     clearAllBtn.disabled = true;
+    setAddMenuFormDisabled(true);
     return;
   }
   await fetchOrders();
@@ -84,6 +90,82 @@ clearAllBtn.addEventListener("click", async () => {
 });
 
 statusFilter.addEventListener("change", renderOrders);
+
+if (addMenuItemBtn) {
+  addMenuItemBtn.addEventListener("click", addMenuItem);
+}
+
+function setAddMenuFormDisabled(disabled) {
+  if (addMenuItemBtn) addMenuItemBtn.disabled = disabled;
+  if (newItemNameInput) newItemNameInput.disabled = disabled;
+  if (newItemPriceInput) newItemPriceInput.disabled = disabled;
+  if (newItemDescriptionInput) newItemDescriptionInput.disabled = disabled;
+  if (newItemStockInput) newItemStockInput.disabled = disabled;
+}
+
+async function addMenuItem() {
+  if (!cafeId) {
+    alert("Invalid QR — missing cafe id.");
+    return;
+  }
+
+  const name = (newItemNameInput?.value || "").trim();
+  const priceRaw = newItemPriceInput?.value;
+  const price = Number(priceRaw);
+  const description = (newItemDescriptionInput?.value || "").trim();
+  const stockRaw = newItemStockInput?.value;
+  let stock = Number(stockRaw);
+  if (!Number.isFinite(stock) || stock < 0) {
+    stock = 10;
+  }
+
+  if (!name) {
+    alert("Please enter an item name.");
+    return;
+  }
+  if (!Number.isFinite(price) || price < 0) {
+    alert("Please enter a valid price.");
+    return;
+  }
+
+  addMenuItemBtn.disabled = true;
+
+  try {
+    const row = {
+      cafe_id: cafeId,
+      name,
+      price,
+      description: description || null,
+      is_available: stock > 0,
+      stock,
+    };
+
+    const { error } = await supabaseClient.from("menu_items").insert(row);
+
+    if (error) {
+      console.error("Failed to add menu item:", error);
+      alert(
+        error.message?.includes("description") || error.code === "PGRST204"
+          ? "Could not save item. Add a `description` column (text) to `menu_items` in Supabase, then try again."
+          : "Failed to add menu item. Check console and Supabase RLS policies."
+      );
+      return;
+    }
+
+    if (newItemNameInput) newItemNameInput.value = "";
+    if (newItemPriceInput) newItemPriceInput.value = "";
+    if (newItemDescriptionInput) newItemDescriptionInput.value = "";
+    if (newItemStockInput) newItemStockInput.value = "10";
+
+    alert("Menu item added successfully.");
+    await fetchMenuItems();
+  } catch (err) {
+    console.error("Unexpected add menu item error:", err);
+    alert("Something went wrong while adding the item.");
+  } finally {
+    if (addMenuItemBtn) addMenuItemBtn.disabled = false;
+  }
+}
 
 async function fetchOrders() {
   try {
@@ -196,8 +278,8 @@ function renderMenuControl() {
   if (!menuItems || menuItems.length === 0) {
     menuControlContainer.innerHTML = `
       <div class="empty-state">
-        <h3>Menu not available</h3>
-        <p>No menu items found for this cafe.</p>
+        <h3>No menu items yet</h3>
+        <p>Use <strong>Add menu item</strong> above to create one. They appear here and on the customer menu.</p>
       </div>
     `;
     return;
@@ -208,6 +290,7 @@ function renderMenuControl() {
       const available = item.is_available === true;
       const stock = Number.isFinite(Number(item.stock)) ? Number(item.stock) : 0;
       const price = Number.isFinite(Number(item.price)) ? Number(item.price) : 0;
+      const shortDesc = (item.description || "").trim();
       const badgeStyle = available
         ? "background:#e8f5e9;color:#2e7d32;"
         : "background:#ffebee;color:#c62828;";
@@ -215,8 +298,13 @@ function renderMenuControl() {
       return `
         <div class="order-card ${available ? "done" : "pending"}" style="margin-bottom: 14px;">
           <div class="order-header">
-            <div class="order-info">
+            <div class="order-info" style="flex-direction: column; align-items: flex-start; gap: 4px;">
               <span class="order-id">${escapeHtml(item.name || "Item")}</span>
+              ${
+                shortDesc
+                  ? `<span style="font-size:0.85rem;font-weight:500;opacity:0.85;">${escapeHtml(shortDesc)}</span>`
+                  : ""
+              }
               <span class="order-status" style="${badgeStyle}">${available ? "available" : "out of stock"}</span>
             </div>
             <div class="order-actions">
