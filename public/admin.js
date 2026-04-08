@@ -1,4 +1,4 @@
-import { supabaseClient } from "./supabaseClient.js";
+import { supabaseClient } from "../supabaseClient.js";
 
 const params = new URLSearchParams(window.location.search);
 const cafeId = params.get("cafe");
