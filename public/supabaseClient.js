@@ -3,6 +3,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 // ✅ DIRECT VALUES (since public folder cannot use import.meta.env)
 const supabaseUrl = "https://kqjaawvwocfgnbinehap.supabase.co";
-const supabaseKey = "YOUR_PUBLIC_ANON_KEY";
+const supabaseKey = "sb_publishable_2eTTdhgdkEG5swTBh-YxDg_MUhLubnQ";
 
 export const supabaseClient = createClient(supabaseUrl, supabaseKey);
