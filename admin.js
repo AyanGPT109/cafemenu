@@ -1,4 +1,4 @@
-import { supabaseClient } from "/supabaseClient.js";
+import { supabaseClient } from "./supabaseClient.js";
 
 const params = new URLSearchParams(window.location.search);
 const cafeId = params.get("cafe");
@@ -180,7 +180,6 @@ async function fetchMenuItems() {
     menuItems = data || [];
     renderMenuControl();
 
-    // If a new item appears, subtle console log
     if (hasChange && incomingIds.size > 0) {
       console.log("[Menu] Menu items updated.");
     }
@@ -507,7 +506,6 @@ function subscribeToRealtime() {
 }
 
 function playAlert() {
-  // Use an MP3 file if available (best UX). Falls back to the built-in beep if autoplay is blocked.
   try {
     const audio = new Audio("/alert.mp3");
     audio.volume = 0.9;
@@ -568,7 +566,6 @@ function playNewOrderSound() {
   oscillator.stop(audioContext.currentTime + 0.18);
 }
 
-// Expose status action to inline button handlers
 window.updateOrderStatus = updateOrderStatus;
 window.setItemAvailable = setItemAvailable;
 window.updateItemStock = updateItemStock;
