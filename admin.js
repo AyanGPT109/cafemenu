@@ -1,7 +1,6 @@
 import { supabaseClient } from "./supabaseClient.js";
 
-const params = new URLSearchParams(window.location.search);
-const cafeId = params.get("cafe");
+const cafeId = resolveCafeId();
 console.log("Cafe ID:", cafeId);
 
 let orders = [];
@@ -10,6 +9,10 @@ let audioContext;
 let latestInsertedOrderId = null;
 let menuItems = [];
 let previousMenuIds = new Set();
+let historyVisible = false;
+let clearedOrderIds = new Set();
+let orderHistory = [];
+let revenueByDate = {};
 
 // DOM elements
 const ordersContainer = document.getElementById("ordersContainer");
@@ -18,6 +21,12 @@ const pendingOrdersEl = document.getElementById("pendingOrders");
 const completedOrdersEl = document.getElementById("completedOrders");
 const refreshBtn = document.getElementById("refreshBtn");
 const clearAllBtn = document.getElementById("clearAllBtn");
+const historyBtn = document.getElementById("historyBtn");
+const historySection = document.getElementById("historySection");
+const historyContainer = document.getElementById("historyContainer");
+const revenueByDateContainer = document.getElementById("revenueByDateContainer");
+const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+const closeHistoryBtn = document.getElementById("closeHistoryBtn");
 const statusFilter = document.getElementById("statusFilter");
 const bulkDeleteBtn = document.getElementById("bulkDeleteBtn");
 const menuControlContainer = document.getElementById("menuControlContainer");
@@ -55,6 +64,7 @@ async function initializeAdmin() {
     setAddMenuFormDisabled(true);
     return;
   }
+  loadHistoryState();
   await fetchMenuItems();
   await fetchOrders();
   subscribeToRealtime();
@@ -68,24 +78,54 @@ async function initializeAdmin() {
   }
 }
 
+function resolveCafeId() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = (params.get("cafe") || params.get("cafe_id") || "").trim();
+  if (fromUrl) {
+    localStorage.setItem("lastCafeId", fromUrl);
+    return fromUrl;
+  }
+
+  const fromStorage = (localStorage.getItem("lastCafeId") || "").trim();
+  if (fromStorage) {
+    return fromStorage;
+  }
+
+  const fromPrompt = (window.prompt("Enter cafe ID for admin panel") || "").trim();
+  if (fromPrompt) {
+    localStorage.setItem("lastCafeId", fromPrompt);
+    return fromPrompt;
+  }
+
+  return "";
+}
+
 // Event listeners
 // Refresh button intentionally disabled/hidden (orders auto-update via realtime).
 
 clearAllBtn.addEventListener("click", async () => {
-  const ok = confirm("Delete all orders from database?");
+  const ok = confirm("Clear current orders from live queue?");
   if (!ok) {
     return;
   }
 
   try {
-    const { error } = await supabaseClient.from("orders").delete().eq("cafe_id", cafeId);
-    if (error) {
-      console.error("Failed to clear orders:", error);
-      alert("Failed to clear orders.");
+    if (orders.length === 0) {
+      alert("No active orders to clear.");
       return;
     }
-    alert("All orders cleared.");
-    await fetchOrders();
+    archiveOrders(orders);
+    for (const order of orders) {
+      if (order?.id) {
+        clearedOrderIds.add(String(order.id));
+      }
+    }
+    orders = [];
+    saveHistoryState();
+    renderOrders();
+    updateStats();
+    renderHistoryView();
+    alert("Orders cleared from live queue and moved to history.");
   } catch (err) {
     console.error("Unexpected clear-all error:", err);
     alert("Something went wrong while clearing orders.");
@@ -96,6 +136,27 @@ statusFilter.addEventListener("change", renderOrders);
 
 if (addMenuItemBtn) {
   addMenuItemBtn.addEventListener("click", addMenuItem);
+}
+if (historyBtn) {
+  historyBtn.addEventListener("click", () => {
+    historyVisible = true;
+    renderHistoryView();
+  });
+}
+if (closeHistoryBtn) {
+  closeHistoryBtn.addEventListener("click", () => {
+    historyVisible = false;
+    renderHistoryView();
+  });
+}
+if (clearHistoryBtn) {
+  clearHistoryBtn.addEventListener("click", () => {
+    const ok = confirm("Clear history list? Revenue summary will remain.");
+    if (!ok) return;
+    orderHistory = [];
+    saveHistoryState();
+    renderHistoryView();
+  });
 }
 
 function setAddMenuFormDisabled(disabled) {
@@ -188,14 +249,73 @@ async function fetchOrders() {
       return;
     }
 
-    previousOrderIds = new Set((data || []).map((order) => order.id));
-    orders = data || [];
+    const allOrders = data || [];
+    previousOrderIds = new Set(allOrders.map((order) => order.id));
+    orders = allOrders.filter((order) => !clearedOrderIds.has(String(order.id)));
     await hydrateOrderItems();
     renderOrders();
     updateStats();
   } catch (err) {
     console.error("Unexpected fetch error:", err);
     alert("Unexpected error while loading orders.");
+  }
+}
+
+async function addOrderToUI(order) {
+  if (!order || !order.id) {
+    return;
+  }
+  if (clearedOrderIds.has(String(order.id))) {
+    return;
+  }
+  if (previousOrderIds.has(order.id) || orders.some((existing) => existing.id === order.id)) {
+    return;
+  }
+
+  let hydratedItems = [];
+  try {
+    const { data, error } = await supabaseClient
+      .from("order_items")
+      .select("*")
+      .eq("order_id", order.id);
+
+    if (error) {
+      console.error("Failed to fetch new order items:", error);
+    } else {
+      hydratedItems = data || [];
+    }
+  } catch (err) {
+    console.error("Unexpected new order items fetch error:", err);
+  }
+
+  latestInsertedOrderId = order.id;
+  previousOrderIds.add(order.id);
+  orders.unshift({
+    ...order,
+    _items: hydratedItems,
+  });
+  renderOrders();
+  updateStats();
+}
+
+function archiveOrders(ordersToArchive) {
+  const nowIso = new Date().toISOString();
+  for (const order of ordersToArchive || []) {
+    const total = calculateOrderTotal(order);
+    const dateKey = formatDateKey(order?.created_at || nowIso);
+    revenueByDate[dateKey] = Number(revenueByDate[dateKey] || 0) + total;
+
+    orderHistory.unshift({
+      id: order.id,
+      table_number: order.table_number,
+      customer_name: order.customer_name,
+      phone_number: order.phone_number,
+      status: order.status,
+      created_at: order.created_at || nowIso,
+      archived_at: nowIso,
+      total,
+      items: Array.isArray(order._items) ? order._items : [],
+    });
   }
 }
 
@@ -468,6 +588,17 @@ function updateStats() {
   completedOrdersEl.textContent = done;
 }
 
+function calculateOrderTotal(order) {
+  const items = Array.isArray(order?._items) ? order._items : [];
+  const priceMap = buildPriceMap(menuItems);
+  return items.reduce((sum, it) => {
+    const qty = Number(it?.quantity || 0);
+    const key = normalizeItemName(it?.item_name || "");
+    const unit = priceMap.get(key) ?? 0;
+    return sum + (Number.isFinite(qty) ? qty : 0) * unit;
+  }, 0);
+}
+
 async function updateOrderStatus(orderId, nextStatus) {
   try {
     const { error } = await supabaseClient
@@ -481,8 +612,16 @@ async function updateOrderStatus(orderId, nextStatus) {
       alert("Failed to update status.");
       return;
     }
-
-    alert(`Order #${orderId} marked as ${nextStatus}.`);
+    orders = orders.map((order) =>
+      String(order.id) === String(orderId)
+        ? {
+            ...order,
+            status: nextStatus,
+          }
+        : order
+    );
+    renderOrders();
+    updateStats();
   } catch (err) {
     console.error("Unexpected status update error:", err);
     alert("Unexpected error while updating status.");
@@ -587,11 +726,43 @@ function subscribeToRealtime() {
     .on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "orders", filter: `cafe_id=eq.${cafeId}` },
-      (payload) => {
-        console.log("New order:", payload.new);
-        latestInsertedOrderId = payload?.new?.id ?? null;
+      async (payload) => {
+        console.log("Realtime order:", payload.new);
+        const incomingOrder = payload?.new;
+        if (!incomingOrder) {
+          return;
+        }
+        if (String(incomingOrder.cafe_id) !== String(cafeId)) {
+          return;
+        }
+        if (clearedOrderIds.has(String(incomingOrder.id))) {
+          return;
+        }
+        await addOrderToUI(incomingOrder);
         playAlert();
-        fetchOrders();
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "orders", filter: `cafe_id=eq.${cafeId}` },
+      (payload) => {
+        const updatedOrder = payload?.new;
+        if (!updatedOrder?.id) {
+          return;
+        }
+        if (clearedOrderIds.has(String(updatedOrder.id))) {
+          return;
+        }
+        orders = orders.map((order) =>
+          String(order.id) === String(updatedOrder.id)
+            ? {
+                ...order,
+                ...updatedOrder,
+              }
+            : order
+        );
+        renderOrders();
+        updateStats();
       }
     )
     .subscribe((status) => {
@@ -604,17 +775,9 @@ function subscribeToRealtime() {
 function playAlert() {
   try {
     const audio = new Audio("/sound.mp3");
-    audio.volume = 0.9;
-    const maybePromise = audio.play();
-    if (maybePromise && typeof maybePromise.catch === "function") {
-      maybePromise.catch((err) => {
-        console.warn("[Alert] Audio play blocked/unavailable, falling back to beep.", err);
-        playNewOrderSound();
-      });
-    }
+    audio.play().catch(() => console.log("Autoplay blocked"));
   } catch (err) {
-    console.warn("[Alert] Failed to play /sound.mp3, falling back to beep.", err);
-    playNewOrderSound();
+    console.warn("[Alert] Failed to play /sound.mp3.", err);
   }
 }
 
@@ -695,4 +858,141 @@ function formatMoney(amount) {
   const n = Number(amount);
   if (!Number.isFinite(n)) return "0";
   return Math.round(n).toString();
+}
+
+function loadHistoryState() {
+  const clearedRaw = localStorage.getItem(getStorageKey("cleared_order_ids"));
+  const historyRaw = localStorage.getItem(getStorageKey("order_history"));
+  const revenueRaw = localStorage.getItem(getStorageKey("revenue_by_date"));
+
+  try {
+    const parsedCleared = JSON.parse(clearedRaw || "[]");
+    clearedOrderIds = new Set(Array.isArray(parsedCleared) ? parsedCleared.map((id) => String(id)) : []);
+  } catch {
+    clearedOrderIds = new Set();
+  }
+
+  try {
+    const parsedHistory = JSON.parse(historyRaw || "[]");
+    orderHistory = Array.isArray(parsedHistory) ? parsedHistory : [];
+  } catch {
+    orderHistory = [];
+  }
+
+  try {
+    const parsedRevenue = JSON.parse(revenueRaw || "{}");
+    revenueByDate = parsedRevenue && typeof parsedRevenue === "object" ? parsedRevenue : {};
+  } catch {
+    revenueByDate = {};
+  }
+}
+
+function saveHistoryState() {
+  localStorage.setItem(getStorageKey("cleared_order_ids"), JSON.stringify(Array.from(clearedOrderIds)));
+  localStorage.setItem(getStorageKey("order_history"), JSON.stringify(orderHistory));
+  localStorage.setItem(getStorageKey("revenue_by_date"), JSON.stringify(revenueByDate));
+}
+
+function getStorageKey(name) {
+  return `admin_${name}_${cafeId}`;
+}
+
+function renderHistoryView() {
+  if (!historySection || !historyContainer || !revenueByDateContainer) {
+    return;
+  }
+
+  historySection.style.display = historyVisible ? "" : "none";
+  if (!historyVisible) {
+    return;
+  }
+
+  const revenueRows = Object.entries(revenueByDate).sort(([a], [b]) => (a < b ? 1 : -1));
+  if (revenueRows.length === 0) {
+    revenueByDateContainer.innerHTML = `
+      <div class="empty-state">
+        <h3>No revenue yet</h3>
+        <p>Revenue will appear date-wise after orders are cleared to history.</p>
+      </div>
+    `;
+  } else {
+    revenueByDateContainer.innerHTML = `
+      <div class="order-card done">
+        <div class="order-header">
+          <div class="order-info">
+            <span class="order-id">Revenue By Date</span>
+          </div>
+        </div>
+        <div class="order-items">
+          ${revenueRows
+            .map(
+              ([date, amount]) => `
+            <div class="order-item">
+              <span class="item-name">${escapeHtml(date)}</span>
+              <span class="item-quantity"></span>
+              <span class="item-price">&#8377;${formatMoney(amount)}</span>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  if (orderHistory.length === 0) {
+    historyContainer.innerHTML = `
+      <div class="empty-state">
+        <h3>No order history</h3>
+        <p>Cleared orders will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  historyContainer.innerHTML = orderHistory
+    .map((entry) => {
+      const items = Array.isArray(entry.items) ? entry.items : [];
+      return `
+        <div class="order-card done">
+          <div class="order-header">
+            <div class="order-info">
+              <span class="order-id">Order: ${String(entry.id || "").slice(0, 8)}</span>
+              <span class="order-time">${formatTime(entry.created_at)}</span>
+              <span class="order-status done">${escapeHtml(entry.status || "done")}</span>
+            </div>
+          </div>
+          <div class="order-items">
+            ${items
+              .map(
+                (item) => `
+              <div class="order-item">
+                <span class="item-name">${escapeHtml(item.item_name || "Item")}</span>
+                <span class="item-quantity">x${item.quantity || 1}</span>
+                <span class="item-price"></span>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+          <div class="order-footer">
+            <span>Archived: ${formatTime(entry.archived_at)}</span>
+            <span class="order-total">Total: &#8377;${formatMoney(entry.total || 0)}</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function formatDateKey(timestamp) {
+  const date = timestamp ? new Date(timestamp) : new Date();
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+  return date.toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }

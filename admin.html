@@ -91,6 +91,7 @@
         </svg>
         Refresh
       </button>
+      <button class="refresh-btn" id="historyBtn">Order History</button>
       <button class="clear-all-btn" id="clearAllBtn">Clear All Orders</button>
     </div>
   </header>
@@ -123,6 +124,18 @@
           <p>Orders will appear here when customers place them</p>
         </div>
       </div>
+    </section>
+
+    <section class="orders-section" id="historySection" style="margin-top: 24px; display: none;">
+      <div class="section-header">
+        <h2>Order History</h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="refresh-btn" id="clearHistoryBtn">Clear History List</button>
+          <button class="clear-all-btn" id="closeHistoryBtn">Close History</button>
+        </div>
+      </div>
+      <div class="orders-container" id="revenueByDateContainer"></div>
+      <div class="orders-container" id="historyContainer" style="margin-top: 14px;"></div>
     </section>
 
     <section class="orders-section" style="margin-top: 24px;">

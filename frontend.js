@@ -4,6 +4,10 @@ const params = new URLSearchParams(window.location.search);
 const cafeId = params.get("cafe");
 const tableNumber = params.get("table");
 
+if (cafeId) {
+  localStorage.setItem("lastCafeId", cafeId);
+}
+
 const menuMount = document.getElementById("menuMount");
 
 // Cart functionality
@@ -41,13 +45,26 @@ checkoutBtn.addEventListener("click", checkout);
 
 // Dynamic menu click handling (works for rendered items)
 document.addEventListener("click", (e) => {
-  const btn = e.target.closest?.(".add-to-cart-btn");
-  if (!btn) {
+  const qtyBtn = e.target.closest?.(".menu-qty-btn");
+  if (qtyBtn) {
+    const id = qtyBtn.dataset.id;
+    const name = qtyBtn.dataset.name;
+    const price = parseFloat(qtyBtn.dataset.price);
+    const change = parseInt(qtyBtn.dataset.change, 10);
+    if (!name || Number.isNaN(price) || !Number.isFinite(change)) {
+      return;
+    }
+    updateQuantityById(id, name, price, change);
     return;
   }
-  const id = btn.dataset.id;
-  const name = btn.dataset.name;
-  const price = parseFloat(btn.dataset.price);
+
+  const addBtn = e.target.closest?.(".add-to-cart-btn");
+  if (!addBtn) {
+    return;
+  }
+  const id = addBtn.dataset.id;
+  const name = addBtn.dataset.name;
+  const price = parseFloat(addBtn.dataset.price);
   if (!name || Number.isNaN(price)) {
     return;
   }
@@ -82,6 +99,20 @@ function addToCart(id, name, price) {
   saveCart();
   updateCartUI();
   showAddedFeedback(name);
+}
+
+function updateQuantityById(id, name, price, change) {
+  const safeId = id || name;
+  const existingItem = cart.find((item) => item.id === safeId);
+
+  if (!existingItem && change > 0) {
+    cart.push({ id: safeId, name, price, quantity: 1 });
+    saveCart();
+    updateCartUI();
+    return;
+  }
+
+  updateQuantity(safeId, change);
 }
 
 function removeFromCart(id) {
@@ -129,6 +160,7 @@ function updateCartUI() {
 
   if (cart.length === 0) {
     cartItems.innerHTML = '<p class="cart-empty">Your cart is empty</p>';
+    refreshMenuQuantities();
     return;
   }
 
@@ -150,6 +182,28 @@ function updateCartUI() {
     `
     )
     .join("");
+  refreshMenuQuantities();
+}
+
+function getItemQuantity(itemId) {
+  const entry = cart.find((item) => item.id === itemId);
+  return entry?.quantity || 0;
+}
+
+function refreshMenuQuantities() {
+  const quantityEls = document.querySelectorAll("[data-menu-qty-id]");
+  quantityEls.forEach((el) => {
+    const id = el.getAttribute("data-menu-qty-id");
+    const qty = getItemQuantity(id);
+    el.textContent = String(qty);
+  });
+
+  const minusBtns = document.querySelectorAll("[data-menu-minus-id]");
+  minusBtns.forEach((btn) => {
+    const id = btn.getAttribute("data-menu-minus-id");
+    const qty = getItemQuantity(id);
+    btn.disabled = qty <= 0;
+  });
 }
 
 function showAddedFeedback(itemName) {
@@ -376,6 +430,9 @@ function renderMenuItem(item) {
   const stockHint = outOfStock ? "Out of stock" : showFewLeft ? "Only few left" : "Freshly prepared.";
   const desc = (item.description || "").trim();
   const subline = desc ? `${escapeHtml(desc)} · ${escapeHtml(stockHint)}` : escapeHtml(stockHint);
+  const itemId = item.id || name;
+  const safeItemId = escapeAttr(itemId);
+  const qty = getItemQuantity(itemId);
   return `
           <article class="menu-card menu-item-card">
             <div class="top menu-item-card__top">
@@ -384,15 +441,31 @@ function renderMenuItem(item) {
             </div>
             <p class="menu-item-card__desc">${subline}</p>
             <div class="menu-item-card__footer">
-              <button
-                class="add-to-cart-btn"
-                data-id="${escapeAttr(item.id)}"
-                data-name="${escapeAttr(name)}"
-                data-price="${price}"
-                ${outOfStock ? "disabled" : ""}
-              >
-                ${outOfStock ? "Out of Stock" : "Add to Cart"}
-              </button>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button
+                  class="quantity-btn menu-qty-btn"
+                  data-id="${safeItemId}"
+                  data-name="${escapeAttr(name)}"
+                  data-price="${price}"
+                  data-change="-1"
+                  data-menu-minus-id="${safeItemId}"
+                  ${outOfStock || qty <= 0 ? "disabled" : ""}
+                >
+                  -
+                </button>
+                <span class="quantity" data-menu-qty-id="${safeItemId}">${qty}</span>
+                <button
+                  class="quantity-btn menu-qty-btn"
+                  data-id="${safeItemId}"
+                  data-name="${escapeAttr(name)}"
+                  data-price="${price}"
+                  data-change="1"
+                  ${outOfStock ? "disabled" : ""}
+                >
+                  +
+                </button>
+                ${outOfStock ? '<span style="font-size:0.85rem;color:#8a3048;font-weight:700;">Out of Stock</span>' : ""}
+              </div>
             </div>
           </article>
         `;
@@ -481,11 +554,11 @@ async function checkout() {
       return;
     }
 
-    alert("Order placed successfully!");
     clearCart();
     closeCart();
     if (customerNameInput) customerNameInput.value = "";
     if (customerPhoneInput) customerPhoneInput.value = "";
+    showOrderPlacedTick();
   } catch (err) {
     console.error("Unexpected checkout error:", err);
     alert("Something went wrong while placing your order.");
@@ -497,6 +570,24 @@ async function checkout() {
 // Make functions globally available for inline onclick handlers.
 window.updateQuantity = updateQuantity;
 window.removeFromCart = removeFromCart;
+
+function showOrderPlacedTick() {
+  const popup = document.createElement("div");
+  popup.style.position = "fixed";
+  popup.style.inset = "0";
+  popup.style.display = "grid";
+  popup.style.placeItems = "center";
+  popup.style.background = "rgba(0,0,0,0.18)";
+  popup.style.zIndex = "1200";
+  popup.innerHTML = `
+    <div style="background:rgba(255,255,255,0.96);border-radius:18px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 18px 50px rgba(0,0,0,0.2);">
+      <div style="width:58px;height:58px;border-radius:999px;background:#43a047;display:grid;place-items:center;color:white;font-size:32px;line-height:1;">&#10003;</div>
+      <div style="font-weight:800;color:#1a1715;">Order placed</div>
+    </div>
+  `;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 1800);
+}
 
 function escapeHtml(text) {
   return String(text)
