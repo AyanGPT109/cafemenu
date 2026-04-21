@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sip &amp; Sprout Cafe Menu</title>
+    <title></title>
     <meta
       name="description"
       content="A bold one-page cafe menu featuring mojitos, cold coffee, hot coffee, and fresh veg and non-veg salads."
@@ -32,7 +32,7 @@
       </div>
       <div class="hero__copy">
         <p class="eyebrow">Cafe Menu / Static One-Page Design</p>
-        <h1>Sip &amp; Sprout</h1>
+        <h1 id="cafeNameHeading">Sip &amp; Sprout</h1>
         <p class="hero__lede">
           Botanical mojitos, velvet coffee, and bright salads curated for a cafe menu
           that feels premium without being hard to deploy.
@@ -132,6 +132,10 @@
         <p class="cart-empty">Your cart is empty</p>
       </div>
       <div class="cart-footer">
+        <div class="cart-total-row">
+          <span>Total Bill</span>
+          <strong id="cartTotal">&#8377;0</strong>
+        </div>
         <input type="text" id="customerName" placeholder="Enter your name" required style="width:100%;padding:0.85rem;border-radius:18px;border:1px solid var(--line);margin-bottom:0.6rem;font:inherit;background:rgba(255,255,255,0.35);" />
         <input type="tel" id="customerPhone" placeholder="Enter phone number" required style="width:100%;padding:0.85rem;border-radius:18px;border:1px solid var(--line);margin-bottom:0.8rem;font:inherit;background:rgba(255,255,255,0.35);" />
         <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout</button>

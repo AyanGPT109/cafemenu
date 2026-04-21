@@ -298,6 +298,14 @@ body {
   font-size: 1.1rem;
 }
 
+/* Bold requirements (admin cards) */
+.order-items .item-name,
+.order-items .item-quantity,
+.order-items .item-price,
+.order-info .order-id {
+  font-weight: 700;
+}
+
 .order-time {
   color: var(--muted);
   font-size: 0.9rem;

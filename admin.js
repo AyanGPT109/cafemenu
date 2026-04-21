@@ -22,6 +22,7 @@ const statusFilter = document.getElementById("statusFilter");
 const bulkDeleteBtn = document.getElementById("bulkDeleteBtn");
 const menuControlContainer = document.getElementById("menuControlContainer");
 const addMenuItemBtn = document.getElementById("addMenuItemBtn");
+const newItemCategoryInput = document.getElementById("newItemCategory");
 const newItemNameInput = document.getElementById("newItemName");
 const newItemPriceInput = document.getElementById("newItemPrice");
 const newItemDescriptionInput = document.getElementById("newItemDescription");
@@ -54,19 +55,21 @@ async function initializeAdmin() {
     setAddMenuFormDisabled(true);
     return;
   }
+  await fetchMenuItems();
   await fetchOrders();
   subscribeToRealtime();
-  await fetchMenuItems();
   subscribeToMenuRealtime();
   unlockAudioOnFirstInteraction();
+
+  // Auto refresh in realtime mode (no manual refresh needed)
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.style.display = "none";
+  }
 }
 
 // Event listeners
-refreshBtn.addEventListener("click", async () => {
-  await fetchOrders();
-  await fetchMenuItems();
-  alert("Orders refreshed.");
-});
+// Refresh button intentionally disabled/hidden (orders auto-update via realtime).
 
 clearAllBtn.addEventListener("click", async () => {
   const ok = confirm("Delete all orders from database?");
@@ -97,6 +100,7 @@ if (addMenuItemBtn) {
 
 function setAddMenuFormDisabled(disabled) {
   if (addMenuItemBtn) addMenuItemBtn.disabled = disabled;
+  if (newItemCategoryInput) newItemCategoryInput.disabled = disabled;
   if (newItemNameInput) newItemNameInput.disabled = disabled;
   if (newItemPriceInput) newItemPriceInput.disabled = disabled;
   if (newItemDescriptionInput) newItemDescriptionInput.disabled = disabled;
@@ -109,6 +113,7 @@ async function addMenuItem() {
     return;
   }
 
+  const category = (newItemCategoryInput?.value || "").trim();
   const name = (newItemNameInput?.value || "").trim();
   const priceRaw = newItemPriceInput?.value;
   const price = Number(priceRaw);
@@ -133,6 +138,7 @@ async function addMenuItem() {
   try {
     const row = {
       cafe_id: cafeId,
+      category: category || null,
       name,
       price,
       description: description || null,
@@ -156,6 +162,7 @@ async function addMenuItem() {
     if (newItemPriceInput) newItemPriceInput.value = "";
     if (newItemDescriptionInput) newItemDescriptionInput.value = "";
     if (newItemStockInput) newItemStockInput.value = "10";
+    if (newItemCategoryInput) newItemCategoryInput.value = "";
 
     alert("Menu item added successfully.");
     await fetchMenuItems();
@@ -181,13 +188,7 @@ async function fetchOrders() {
       return;
     }
 
-    const incomingIds = new Set((data || []).map((order) => order.id));
-    const hasNewOrder = (data || []).some((order) => !previousOrderIds.has(order.id));
-    if (hasNewOrder && previousOrderIds.size > 0) {
-      playNewOrderSound();
-    }
-
-    previousOrderIds = incomingIds;
+    previousOrderIds = new Set((data || []).map((order) => order.id));
     orders = data || [];
     await hydrateOrderItems();
     renderOrders();
@@ -352,6 +353,7 @@ function renderOrders() {
     filterValue === "all"
       ? orders
       : orders.filter((order) => order.status === filterValue);
+  const priceMap = buildPriceMap(menuItems);
 
   if (filteredOrders.length === 0) {
     ordersContainer.innerHTML = `
@@ -371,6 +373,12 @@ function renderOrders() {
   ordersContainer.innerHTML = filteredOrders
     .map((order) => {
       const items = Array.isArray(order._items) ? order._items : [];
+      const totalBill = items.reduce((sum, it) => {
+        const qty = Number(it.quantity || 0);
+        const key = normalizeItemName(it.item_name || "");
+        const unit = priceMap.get(key) ?? 0;
+        return sum + unit * (Number.isFinite(qty) ? qty : 0);
+      }, 0);
       const tableLabel = Number.isFinite(Number(order.table_number))
         ? `Table ${order.table_number}`
         : "Table -";
@@ -431,8 +439,8 @@ function renderOrders() {
             .join("")}
         </div>
         <div class="order-footer">
-          <span>Cafe: ${cafeId}</span>
-          <span class="order-total"></span>
+          <span></span>
+          <span class="order-total">Total: &#8377;${formatMoney(totalBill)}</span>
         </div>
       </div>
     `;
@@ -575,7 +583,7 @@ function formatTime(timestamp) {
 
 function subscribeToRealtime() {
   supabaseClient
-    .channel("orders")
+    .channel("orders-channel")
     .on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "orders", filter: `cafe_id=eq.${cafeId}` },
@@ -595,7 +603,7 @@ function subscribeToRealtime() {
 
 function playAlert() {
   try {
-    const audio = new Audio("/alert.mp3");
+    const audio = new Audio("/sound.mp3");
     audio.volume = 0.9;
     const maybePromise = audio.play();
     if (maybePromise && typeof maybePromise.catch === "function") {
@@ -605,7 +613,7 @@ function playAlert() {
       });
     }
   } catch (err) {
-    console.warn("[Alert] Failed to play /alert.mp3, falling back to beep.", err);
+    console.warn("[Alert] Failed to play /sound.mp3, falling back to beep.", err);
     playNewOrderSound();
   }
 }
@@ -666,4 +674,25 @@ function escapeHtml(text) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function buildPriceMap(items) {
+  const map = new Map();
+  for (const it of items || []) {
+    const name = normalizeItemName(it?.name || "");
+    const price = Number(it?.price || 0);
+    if (!name) continue;
+    map.set(name, Number.isFinite(price) ? price : 0);
+  }
+  return map;
+}
+
+function normalizeItemName(name) {
+  return String(name || "").trim().toLowerCase();
+}
+
+function formatMoney(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return "0";
+  return Math.round(n).toString();
 }

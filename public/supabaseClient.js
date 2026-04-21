@@ -5,8 +5,8 @@
  */
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const supabaseUrl = "PASTE_SUPABASE_URL";
-const supabaseKey = "PASTE_SUPABASE_ANON_KEY";
+const supabaseUrl = "https://kqjaavvwocfgnbinehap.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxamFhdnZ3b2NmZ25iaW5laGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzIxMDAsImV4cCI6MjA5MTI0ODEwMH0.-7mBi797VJT-FrIeGddv3J9B0v6ab_X4uYiGnk_OolU";
 
 if (!supabaseUrl.startsWith("http") || supabaseKey.startsWith("PASTE_")) {
   console.warn(

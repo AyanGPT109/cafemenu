@@ -24,6 +24,7 @@ const cartSidebar = document.getElementById("cartSidebar");
 const cartClose = document.getElementById("cartClose");
 const cartCount = document.getElementById("cartCount");
 const cartItems = document.getElementById("cartItems");
+const cartTotalEl = document.getElementById("cartTotal");
 const clearCartBtn = document.getElementById("clearCartBtn");
 const checkoutBtn = document.getElementById("checkoutBtn");
 const customerNameInput = document.getElementById("customerName");
@@ -122,6 +123,9 @@ function getCartTotal() {
 function updateCartUI() {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   cartCount.textContent = totalItems;
+  if (cartTotalEl) {
+    cartTotalEl.innerHTML = `&#8377;${getCartTotal()}`;
+  }
 
   if (cart.length === 0) {
     cartItems.innerHTML = '<p class="cart-empty">Your cart is empty</p>';
@@ -180,11 +184,17 @@ async function initializeCafeMenu() {
   // Optional: show which table is ordering (no UI redesign)
   console.log(`[Cafe] cafe=${cafeId} table=${tableNumber}`);
 
+  const cafeName = await fetchCafeName();
+  const cafeNameHeading = document.getElementById("cafeNameHeading");
+  if (cafeNameHeading && cafeName) {
+    cafeNameHeading.textContent = cafeName;
+  }
+
   menuMount.innerHTML = `
     <section class="menu-section">
       <div class="section-heading">
         <p class="eyebrow">Menu</p>
-        <h2>Choose your items</h2>
+        <h2 id="menuTitle">${escapeHtml(cafeName || "Choose your items")}</h2>
       </div>
 
       <div class="menu-grid">
@@ -212,6 +222,24 @@ async function initializeCafeMenu() {
 
   await fetchAndRenderMenu();
   subscribeToMenuRealtime();
+}
+
+async function fetchCafeName() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("cafes")
+      .select("name")
+      .eq("id", cafeId)
+      .single();
+    if (error) {
+      console.warn("[Cafe] Failed to fetch cafe name:", error);
+      return null;
+    }
+    return (data?.name || "").trim() || null;
+  } catch (err) {
+    console.warn("[Cafe] Unexpected cafe name error:", err);
+    return null;
+  }
 }
 
 function showInvalidQr() {
@@ -289,24 +317,73 @@ async function fetchAndRenderMenu() {
       return;
     }
 
-    menuList.innerHTML = visibleItems
-      .map((item) => {
-        const name = item.name || "Item";
-        const price = Number(item.price || 0);
-        const stock = Number.isFinite(Number(item.stock)) ? Number(item.stock) : 0;
-        const showFewLeft = stock > 0 && stock <= 3;
-        const outOfStock = stock <= 0;
-        const stockHint = outOfStock ? "Out of stock" : showFewLeft ? "Only few left" : "Freshly prepared.";
-        const desc = (item.description || "").trim();
-        const subline = desc ? `${escapeHtml(desc)} · ${escapeHtml(stockHint)}` : escapeHtml(stockHint);
+    const grouped = groupByCategory(visibleItems);
+    const categorySections = Object.entries(grouped)
+      .map(([category, items]) => {
+        const heading = escapeHtml(category);
+        const itemsHtml = items.map(renderMenuItem).join("");
         return `
-          <div class="menu-item">
-            <div>
-              <h3>${escapeHtml(name)}</h3>
-              <p>${subline}</p>
+          <section class="category-block">
+            <h2 class="category-title">${heading}</h2>
+            <div class="menu-grid">${itemsHtml}</div>
+          </section>
+        `;
+      })
+      .join("");
+
+    if (!categorySections) {
+      menuMount.innerHTML = `
+        <section class="menu-section">
+          <div class="section-heading">
+            <p class="eyebrow">Menu not available</p>
+            <h2>Menu not available</h2>
+            <p>No categorized items found for this cafe.</p>
+          </div>
+        </section>
+      `;
+      return;
+    }
+
+    menuList.innerHTML = `
+      <div class="menu-categories">
+        ${categorySections}
+      </div>
+    `;
+  } catch (err) {
+    console.error("Unexpected menu load error:", err);
+    alert("Menu not available");
+  }
+}
+
+function groupByCategory(items) {
+  const grouped = (items || []).reduce((acc, item) => {
+    const category = item?.category?.trim();
+    if (!category) return acc;
+
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(item);
+    return acc;
+  }, {});
+  return Object.fromEntries(Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function renderMenuItem(item) {
+  const name = item.name || "Item";
+  const price = Number(item.price || 0);
+  const stock = Number.isFinite(Number(item.stock)) ? Number(item.stock) : 0;
+  const showFewLeft = stock > 0 && stock <= 3;
+  const outOfStock = stock <= 0;
+  const stockHint = outOfStock ? "Out of stock" : showFewLeft ? "Only few left" : "Freshly prepared.";
+  const desc = (item.description || "").trim();
+  const subline = desc ? `${escapeHtml(desc)} · ${escapeHtml(stockHint)}` : escapeHtml(stockHint);
+  return `
+          <article class="menu-card menu-item-card">
+            <div class="top menu-item-card__top">
+              <h3 class="menu-item-card__name">${escapeHtml(name)}</h3>
+              <span class="menu-item-card__price">&#8377;${price}</span>
             </div>
-            <div class="menu-item__footer">
-              <span>&#8377;${price}</span>
+            <p class="menu-item-card__desc">${subline}</p>
+            <div class="menu-item-card__footer">
               <button
                 class="add-to-cart-btn"
                 data-id="${escapeAttr(item.id)}"
@@ -317,14 +394,8 @@ async function fetchAndRenderMenu() {
                 ${outOfStock ? "Out of Stock" : "Add to Cart"}
               </button>
             </div>
-          </div>
+          </article>
         `;
-      })
-      .join("");
-  } catch (err) {
-    console.error("Unexpected menu load error:", err);
-    alert("Menu not available");
-  }
 }
 
 function subscribeToMenuRealtime() {
